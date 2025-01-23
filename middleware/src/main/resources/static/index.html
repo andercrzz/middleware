@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AAS Creation Form</title>
+</head>
+<body>
+    <h2>Create an AAS</h2>
+    <form id="aasForm">
+        <label for="idShort">ID Short:</label>
+        <input type="text" id="idShort" name="idShort" required><br><br>
+        
+        <label for="identificationId">Identification ID:</label>
+        <input type="text" id="identificationId" name="identificationId" required><br><br>
+        
+        <label for="endpoint">Endpoint Address:</label>
+        <input type="text" id="endpoint" name="endpoint" required><br><br>
+        
+        <button type="submit">Create AAS</button>
+    </form>
+
+    <script>
+        document.getElementById('aasForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const idShort = document.getElementById('idShort').value;
+            const identificationId = document.getElementById('identificationId').value;
+            const endpoint = document.getElementById('endpoint').value;
+
+            const aasData = {
+                idShort: idShort,
+                identification: {
+                    id: identificationId,
+                    idType: "Custom"
+                },
+                endpoints: [
+                    {
+                        type: "http",
+                        address: endpoint
+                    }
+                ],
+                submodels: [
+                    {
+                        idShort: "MyQuickStartSubmodel",
+                        identification: {
+                            id: "MyQuickStartSubmodelID"
+                        },
+                        endpoints: [
+                            {
+                                type: "http",
+                                address: `${endpoint}/aas/submodels/MyQuickStartSubmodel`
+                            }
+                        ]
+                    }
+                ]
+            };
+
+            try {
+                const response = await fetch(`http://localhost:8082/registry/api/v1/registry/${identificationId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(aasData)
+                });
+
+                if (response.ok) {
+                    alert('AAS successfully created!');
+                } else {
+                    alert('Failed to create AAS');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error creating AAS');
+            }
+        });
+    </script>
+</body>
+</html>
