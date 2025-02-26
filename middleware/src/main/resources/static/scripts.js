@@ -137,6 +137,8 @@ function displayAAS(aasList) {
             <p>Endpoint: ${aas.endpoints[0].address}</p>
             <button class="edit" onclick="editAAS('${aas.identification.id}', '${aas.idShort}', '${aas.endpoints[0].address}')">Edit</button>
             <button onclick="deleteAAS('${aas.identification.id}')">Delete</button>
+            <button onclick="toggleSubmodels('${aas.identification.id}')">Toggle Submodels</button>
+            <div id="submodels-${aas.identification.id}" class="submodel-container" style="display: none;"></div>
         `;
         container.appendChild(aasElement);
     });
@@ -167,6 +169,48 @@ async function deleteAAS(id) {
             alert('Error deleting AAS');
         }
     }
+}
+
+async function toggleSubmodels(id) {
+    const submodelContainer = document.getElementById(`submodels-${id}`);
+    if (submodelContainer.style.display === 'none') {
+        try {
+            const response = await fetch(`http://localhost:8082/registry/api/v1/registry/${id}/submodels`);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const submodels = await response.json();
+            submodelContainer.innerHTML = ''; // Clear any existing content
+            submodels.forEach(submodel => {
+                const submodelElement = document.createElement('div');
+                submodelElement.className = 'submodel-item';
+                submodelElement.innerHTML = `
+                    <p>Submodel ID Short: ${submodel.idShort}</p>
+                    <p>Submodel ID: ${submodel.identification.id}</p>
+                `;
+                submodelContainer.appendChild(submodelElement);
+            });
+            submodelContainer.style.display = 'block';
+        } catch (error) {
+            console.error('There has been a problem with your fetch operation:', error);
+        }
+    } else {
+        submodelContainer.style.display = 'none';
+    }
+}
+
+function searchAAS() {
+    const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+    const aasItems = document.getElementsByClassName('aas-item');
+
+    Array.from(aasItems).forEach(item => {
+        const idShort = item.getElementsByTagName('h3')[0].innerText.toLowerCase();
+        if (idShort.includes(searchTerm)) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
 }
 
 window.onload = fetchAAS;

@@ -1,13 +1,25 @@
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f4f9;
+    font-family: 'Roboto', sans-serif;
+    background-color: #e3f2fd;
     color: #333;
     margin: 20px;
 }
 
+header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.logo {
+    width: 100px;
+    margin-right: 20px;
+}
+
 h1 {
     text-align: center;
-    color: #4CAF50;
+    color: #1e88e5;
 }
 
 .container {
@@ -25,7 +37,7 @@ h1 {
 }
 
 h2 {
-    color: #4CAF50;
+    color: #1e88e5;
 }
 
 label {
@@ -41,7 +53,7 @@ input[type="text"] {
 }
 
 button {
-    background-color: #4CAF50;
+    background-color: #1e88e5;
     color: white;
     padding: 10px 20px;
     border: none;
@@ -51,7 +63,7 @@ button {
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #1565c0;
 }
 
 .aas-item {
@@ -59,7 +71,7 @@ button:hover {
     padding: 15px;
     margin: 10px 0;
     border-radius: 8px;
-    background-color: #fafafa;
+    background-color: #f1f8e9;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -74,17 +86,35 @@ button:hover {
 
 .aas-item button {
     margin-right: 10px;
-    background-color: #f44336;
+    background-color: #e53935;
 }
 
 .aas-item button:hover {
-    background-color: #d32f2f;
+    background-color: #c62828;
 }
 
 .aas-item button.edit {
-    background-color: #2196F3;
+    background-color: #1e88e5;
 }
 
 .aas-item button.edit:hover {
-    background-color: #1976D2;
+    background-color: #1565c0;
+}
+
+.submodel-container {
+    margin-top: 10px;
+    padding-left: 20px;
+    border-left: 2px solid #ccc;
+}
+
+.submodel-item {
+    margin: 5px 0;
+}
+
+#searchBar {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
