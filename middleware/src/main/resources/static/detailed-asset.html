@@ -5,6 +5,7 @@
     <title>Asset Details</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header>
@@ -41,6 +42,7 @@
             const assetId = getAssetIdFromUrl();
             if (!assetId) {
                 document.getElementById('asset-details').innerHTML = '<p>Asset not found.</p>';
+                
                 return;
             }
             // Fetch asset details (ajusta la URL si tu backend es diferente)
@@ -63,12 +65,35 @@
                         ).join('')}
                     </ul>
                 </div>
+                <canvas id="assetChart" width="400" height="200" style="margin-top:20px;"></canvas>
                 <div style="display:flex; gap:10px; margin-top:20px;">
                     <button onclick="editAAS('${aas.identification.id}', '${aas.idShort}', '${aas.endpoints[0].address}')">Edit</button>
                     <button onclick="deleteAAS('${aas.identification.id}')">Delete</button>
                     <button onclick="openReportModal('${aas.identification.id}', '${aas.idShort}')">Report</button>
                 </div>
             `;
+
+            // Chart.js code
+            const ctx = document.getElementById('assetChart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Metric 1', 'Metric 2', 'Metric 3'],
+                    datasets: [{
+                        label: 'Submodel Data',
+                        data: [12, 19, 3], // puedes cargar datos reales aquí
+                        backgroundColor: ['#1e88e5', '#1565c0', '#90caf9'],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
         }
 
         // Puedes reutilizar las funciones openReportModal, closeReportModal, y el submit del reportForm de tu scripts.js
