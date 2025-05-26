@@ -11,7 +11,7 @@ header {
     justify-content: space-between;
     background-color: #1f1641;
     padding: 10px 30px;
-    margin-bottom: 20px;
+    margin-bottom: 5px;
     border-radius: 0; /* Sin bordes redondeados */
     width: 100%;
     min-width: 0;
@@ -269,29 +269,61 @@ button:hover {
     margin: 0;
 }
 
-/* Cuando la pantalla es menor o igual a 900px: apila los contenedores */
-/*
-@media (max-width: 900px) {
-    .container {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .form-container, .aas-container {
-        width: 100%;
-        max-width: 100%;
-    }
+/* Para detailed-asset.html */
+/* filepath: c:\Users\Usuario\Desktop\TFG\Middleware\middleware\middleware\src\main\resources\static\styles.css */
+.asset-detail-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    width: 100%;
+    min-height: 350px;
 }
 
-/* Cuando la pantalla es mayor a 900px: uno al lado del otro */
-/*
-@media (min-width: 901px) {
-    .container {
-        flex-direction: row;
-        align-items: flex-start;
+.asset-detail-image {
+    width: 50%;
+    min-width: 220px;
+    max-width: 600px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f5f5;
+    border-radius: 12px 0 0 12px;
+    overflow: hidden;
+}
+
+.asset-detail-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px 0 0 12px;
+    display: block;
+}
+
+.asset-detail-info {
+    width: 50%;
+    background: #fff;
+    border-radius: 0 12px 12px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    padding: 32px 32px 32px 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 350px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+    .asset-detail-layout {
+        flex-direction: column;
     }
-    .form-container, .aas-container {
-        width: 48%;
-        max-width: 48%;
+    .asset-detail-image,
+    .asset-detail-info {
+        width: 100%;
+        border-radius: 12px;
+        min-height: unset;
+        max-width: 100%;
+    }
+    .asset-detail-info {
+        padding: 24px 12px;
     }
 }
-*/

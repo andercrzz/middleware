@@ -9,13 +9,18 @@
 </head>
 <body>
     <header>
-        <img src="Logo_Mondragon_Unibertsitatea.png" alt="Mondragon Unibertsitatea Logo" class="logo">
+        <img src="mondragon_logo.png" alt="Mondragon Unibertsitatea Logo" class="logo">
         <h1 class="header-title">Asset Details</h1>
-        <img src="Logo_Mondragon_Unibertsitatea.png" alt="Mondragon Unibertsitatea Logo" class="logo">
+        <img src="arrowhead_logo.png" alt="Mondragon Unibertsitatea Logo" class="logo">
     </header>
     <div class="container">
-        <div class="form-container" id="asset-details">
-            <!-- Asset details will be loaded here -->
+        <div class="asset-detail-layout">
+            <div class="asset-detail-image">
+                <img src="brazo-robotico.jpg" alt="Asset">
+            </div>
+            <div class="asset-detail-info" id="asset-details">
+                <!-- Aquí se cargan los detalles, submodelos, gráficas, botones, etc. -->
+            </div>
         </div>
     </div>
     <!-- Report Modal (igual que en index.html) -->
@@ -53,7 +58,6 @@
             }
             const aas = await response.json();
             document.getElementById('asset-details').innerHTML = `
-                <img src="brazo-robotico.jpg" alt="Asset" class="asset-img">
                 <h2>${aas.idShort}</h2>
                 <p><strong>ID:</strong> ${aas.identification.id}</p>
                 <p><strong>Endpoint:</strong> ${aas.endpoints[0].address}</p>
