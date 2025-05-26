@@ -127,14 +127,15 @@ function displayAAS(aasList, page = 1) {
         const aasElement = document.createElement('div');
         aasElement.className = 'aas-item';
         aasElement.innerHTML = `
-            <h3>${aas.idShort}</h3>
-            <p>ID: ${aas.identification.id}</p>
-            <p>Endpoint: ${aas.endpoints[0].address}</p>
+            <img src="brazo-robotico.jpg" alt="Asset" class="asset-img">
+            <h3 title="${aas.idShort}">${aas.idShort}</h3>
+            <p title="${aas.identification.id}">ID: ${aas.identification.id}</p>
+            <p title="${aas.endpoints[0].address}">Endpoint: ${aas.endpoints[0].address}</p>
+            <div id="submodels-${aas.identification.id}" class="submodel-container"></div>
             <button class="edit" onclick="editAAS('${aas.identification.id}', '${aas.idShort}', '${aas.endpoints[0].address}')">Edit</button>
             <button onclick="deleteAAS('${aas.identification.id}')">Delete</button>
             <button onclick="toggleSubmodels('${aas.identification.id}')">Toggle Submodels</button>
             <button class="report" onclick="openReportModal('${aas.identification.id}', '${aas.idShort}')">Report</button>
-            <div id="submodels-${aas.identification.id}" class="submodel-container" style="display: none;"></div>
         `;
         container.appendChild(aasElement);
     });
@@ -143,7 +144,6 @@ function displayAAS(aasList, page = 1) {
     const showMoreBtn = document.getElementById('showMoreBtn');
     showMoreBtn.style.display = '';
     showMoreBtn.textContent = 'See all';
-    
 }
 
 async function fetchAAS() {

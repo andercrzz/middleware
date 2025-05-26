@@ -1,25 +1,48 @@
 body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #e3f2fd;
-    color: #333;
-    margin: 20px;
+    font-family: 'Poppins', 'Segoe UI', 'Roboto', Arial, sans-serif;
+    background-color: #fff;
+    color: #222;
+    margin: 0; /* Elimina el margen para que el header llegue arriba */
 }
 
 header {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    background-color: #1f1641;
+    padding: 10px 30px;
     margin-bottom: 20px;
+    border-radius: 0; /* Sin bordes redondeados */
+    width: 100%;
+    min-width: 0;
+    max-width: 100vw;
+    box-sizing: border-box;
+    position: static;
+    left: 0;
+    right: 0;
+    transform: none;
 }
 
 .logo {
-    width: 100px;
-    margin-right: 20px;
+    width: 48px;
+    height: auto;
+    margin: 0;
 }
 
-h1 {
+.header-title {
+    flex: 1;
     text-align: center;
+    color: #fff;
+    font-family: 'Poppins', 'Segoe UI', 'Roboto', Arial, sans-serif;
+    font-weight: 600;
+    font-size: 2rem;
+    margin: 0;
+}
+
+h1, h2 {
+    font-family: 'Poppins', 'Segoe UI', 'Roboto', Arial, sans-serif;
     color: #1e88e5;
+    font-weight: 600;
 }
 
 .container {
@@ -30,26 +53,33 @@ h1 {
 
 .form-container, .aas-container {
     width: 48%;
-    background-color: #fff;
+    background-color: #fff; /* Fondo blanco */
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12); /* Sombra negra suave */
 }
 
 h2 {
-    color: #1e88e5;
+    color: #111;
+    font-weight: 600;
+}
+
+.aas-container h2 {
+    color: #111;
 }
 
 label {
     font-weight: bold;
 }
 
-input[type="text"] {
+input[type="text"], textarea {
+    font-family: 'Poppins', 'Segoe UI', 'Roboto', Arial, sans-serif;
     width: calc(100% - 22px);
     padding: 10px;
     margin: 5px 0 15px 0;
     border: 1px solid #ccc;
     border-radius: 4px;
+    background: #fff;
 }
 
 button {
@@ -57,13 +87,17 @@ button {
     color: white;
     padding: 10px 20px;
     border: none;
-    border-radius: 4px;
+    border-radius: 22px;
     cursor: pointer;
     font-size: 16px;
+    font-family: 'Poppins', 'Segoe UI', 'Roboto', Arial, sans-serif;
+    box-shadow: 0 2px 6px rgba(30, 41, 59, 0.12);
+    transition: background 0.2s, box-shadow 0.2s;
 }
 
 button:hover {
     background-color: #1565c0;
+    box-shadow: 0 4px 12px rgba(30, 41, 59, 0.18);
 }
 
 /* Horizontal scroll para la lista de assets */
@@ -73,60 +107,135 @@ button:hover {
     overflow-x: auto;
     gap: 20px;
     max-width: 100%;
-    padding-bottom: 10px;
+    padding-bottom: 30px;
     scroll-behavior: smooth;
     min-height: 220px; /* Ajusta según el tamaño de tus .aas-item */
 }
 
 .aas-item {
-    min-width: 300px;
-    max-width: 300px;
+    min-width: 220px;
+    max-width: 220px;
     flex: 0 0 auto;
     margin: 0;
     background-color: #fff;
-    border: 1px solid #ccc;
+    border: 1.5px solid #eee;
     border-radius: 12px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
-    padding: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    padding: 14px 12px 12px 12px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    position: relative;
+    transition: box-shadow 0.25s, border-color 0.25s, transform 0.18s;
+    overflow: hidden;
+}
+
+.aas-item:hover {
+    box-shadow: 0 8px 32px 0 rgba(30,41,59,0.25), 0 0 0 2px #9cc9c3;
+    border-color: #9cc9c3;
+    transform: translateY(-4px) scale(1.03);
+    background: linear-gradient(120deg, #f8fafc 80%, #e0f7fa 100%);
 }
 
 .aas-item h3 {
     margin-top: 0;
     color: #333;
+    font-size: 1.05rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .aas-item p {
     margin: 5px 0;
+    font-size: 0.92rem;
+    color: #444;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.aas-item img.asset-img {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    margin-top: 0;
+    background: #f5f5f5;
 }
 
 .aas-item button {
-    margin-right: 10px;
-    background-color: #e53935;
-}
-
-.aas-item button:hover {
-    background-color: #c62828;
+    margin: 6px 0 0 0;
+    width: 100%;
+    padding: 12px 0;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: 'Poppins', 'Segoe UI', 'Roboto', Arial, sans-serif;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 4px rgba(30,41,59,0.08);
 }
 
 .aas-item button.edit {
-    background-color: #1e88e5;
+    background-color: #262626;
+    color: #fff;
 }
 
 .aas-item button.edit:hover {
-    background-color: #1565c0;
+    background-color: #444;
+    color: #fff;
 }
 
+.aas-item button.report {
+    background-color: #9cc9c3;
+    color: #222;
+}
+
+.aas-item button.report:hover {
+    background-color: #7bb3ad;
+    color: #fff;
+}
+
+.aas-item button:not(.edit):not(.report) {
+    background-color: #f5f5f5;
+    color: #262626;
+}
+
+.aas-item button:not(.edit):not(.report):hover {
+    background-color: #e0e0e0;
+    color: #1e88e5;
+}
+
+/* Submodel container above buttons */
 .submodel-container {
-    margin-top: 10px;
-    padding-left: 20px;
-    border-left: 2px solid #ccc;
+    margin-top: 0;
+    margin-bottom: 10px;
+    padding-left: 0;
+    border-left: none;
+    background: #f7fafd;
+    border-radius: 7px;
+    box-shadow: 0 2px 8px rgba(30,41,59,0.10);
+    position: absolute;
+    top: 100px;
+    left: 10px;
+    right: 10px;
+    z-index: 2;
+    min-width: 180px;
+    max-width: 95%;
+    padding: 10px 10px 10px 10px;
+    display: none;
 }
 
 .submodel-item {
     margin: 5px 0;
+    font-size: 0.92rem;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .search-bar-group {
@@ -137,7 +246,7 @@ button:hover {
 }
 
 #searchBar {
-    width: 65%;
+    width: 75%;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -145,7 +254,7 @@ button:hover {
 }
 
 #showMoreBtn {
-    width: 15%;
+    width: 25%;
     white-space: nowrap;
     padding: 10px 12px;
     margin: 0;
