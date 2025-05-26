@@ -132,11 +132,16 @@ function displayAAS(aasList, page = 1) {
             <p title="${aas.identification.id}">ID: ${aas.identification.id}</p>
             <p title="${aas.endpoints[0].address}">Endpoint: ${aas.endpoints[0].address}</p>
             <div id="submodels-${aas.identification.id}" class="submodel-container"></div>
-            <button class="edit" onclick="editAAS('${aas.identification.id}', '${aas.idShort}', '${aas.endpoints[0].address}')">Edit</button>
-            <button onclick="deleteAAS('${aas.identification.id}')">Delete</button>
-            <button onclick="toggleSubmodels('${aas.identification.id}')">Toggle Submodels</button>
-            <button class="report" onclick="openReportModal('${aas.identification.id}', '${aas.idShort}')">Report</button>
+            <button class="edit" onclick="event.stopPropagation(); editAAS('${aas.identification.id}', '${aas.idShort}', '${aas.endpoints[0].address}')">Edit</button>
+            <button onclick="event.stopPropagation(); deleteAAS('${aas.identification.id}')">Delete</button>
+            <button onclick="event.stopPropagation(); toggleSubmodels('${aas.identification.id}')">Toggle Submodels</button>
+            <button class="report" onclick="event.stopPropagation(); openReportModal('${aas.identification.id}', '${aas.idShort}')">Report</button>
         `;
+        aasElement.onclick = function(e) {
+            // Evita que el click en los botones dispare la redirección
+            if (e.target.tagName.toLowerCase() === 'button') return;
+            window.location.href = `detailed-asset.html?id=${encodeURIComponent(aas.identification.id)}`;
+        };
         container.appendChild(aasElement);
     });
 

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Asset Details</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <img src="Logo_Mondragon_Unibertsitatea.png" alt="Mondragon Unibertsitatea Logo" class="logo">
+        <h1 class="header-title">Asset Details</h1>
+        <img src="Logo_Mondragon_Unibertsitatea.png" alt="Mondragon Unibertsitatea Logo" class="logo">
+    </header>
+    <div class="container">
+        <div class="form-container" id="asset-details">
+            <!-- Asset details will be loaded here -->
+        </div>
+    </div>
+    <!-- Report Modal (igual que en index.html) -->
+    <div id="reportModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); align-items:center; justify-content:center; z-index:1000;">
+        <div style="background:#fff; padding:30px; border-radius:10px; min-width:300px;">
+            <h3>Report AAS</h3>
+            <form id="reportForm">
+                <input type="hidden" id="reportAasId" name="reportAasId">
+                <label for="reportMessage">Message:</label><br>
+                <textarea id="reportMessage" name="reportMessage" rows="4" style="width:100%;" required></textarea><br><br>
+                <button type="submit">Send Report</button>
+                <button type="button" onclick="closeReportModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        // Get asset ID from URL
+        function getAssetIdFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('id');
+        }
+
+        async function loadAssetDetails() {
+            const assetId = getAssetIdFromUrl();
+            if (!assetId) {
+                document.getElementById('asset-details').innerHTML = '<p>Asset not found.</p>';
+                return;
+            }
+            // Fetch asset details (ajusta la URL si tu backend es diferente)
+            const response = await fetch(`http://localhost:8082/registry/api/v1/registry/${encodeURIComponent(assetId)}`);
+            if (!response.ok) {
+                document.getElementById('asset-details').innerHTML = '<p>Asset not found.</p>';
+                return;
+            }
+            const aas = await response.json();
+            document.getElementById('asset-details').innerHTML = `
+                <img src="brazo-robotico.jpg" alt="Asset" class="asset-img">
+                <h2>${aas.idShort}</h2>
+                <p><strong>ID:</strong> ${aas.identification.id}</p>
+                <p><strong>Endpoint:</strong> ${aas.endpoints[0].address}</p>
+                <div>
+                    <strong>Submodels:</strong>
+                    <ul>
+                        ${(aas.submodels || []).map(sub =>
+                            `<li>${sub.idShort} (${sub.identification.id})</li>`
+                        ).join('')}
+                    </ul>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button onclick="editAAS('${aas.identification.id}', '${aas.idShort}', '${aas.endpoints[0].address}')">Edit</button>
+                    <button onclick="deleteAAS('${aas.identification.id}')">Delete</button>
+                    <button onclick="openReportModal('${aas.identification.id}', '${aas.idShort}')">Report</button>
+                </div>
+            `;
+        }
+
+        // Puedes reutilizar las funciones openReportModal, closeReportModal, y el submit del reportForm de tu scripts.js
+
+        window.onload = loadAssetDetails;
+    </script>
+    <script src="scripts.js"></script>
+</body>
+</html>
