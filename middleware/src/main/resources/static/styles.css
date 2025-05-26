@@ -66,13 +66,31 @@ button:hover {
     background-color: #1565c0;
 }
 
+/* Horizontal scroll para la lista de assets */
+#aas-container {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 20px;
+    max-width: 100%;
+    padding-bottom: 10px;
+    scroll-behavior: smooth;
+    min-height: 220px; /* Ajusta según el tamaño de tus .aas-item */
+}
+
 .aas-item {
+    min-width: 300px;
+    max-width: 300px;
+    flex: 0 0 auto;
+    margin: 0;
+    background-color: #fff;
     border: 1px solid #ccc;
-    padding: 15px;
-    margin: 10px 0;
-    border-radius: 8px;
-    background-color: #f1f8e9;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .aas-item h3 {
@@ -111,10 +129,24 @@ button:hover {
     margin: 5px 0;
 }
 
+.search-bar-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
 #searchBar {
-    width: 100%;
+    width: 65%;
     padding: 10px;
-    margin-bottom: 20px;
     border: 1px solid #ccc;
     border-radius: 4px;
+    margin-bottom: 0;
+}
+
+#showMoreBtn {
+    width: 15%;
+    white-space: nowrap;
+    padding: 10px 12px;
+    margin: 0;
 }

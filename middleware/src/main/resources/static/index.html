@@ -43,10 +43,27 @@
         </div>
         <div class="aas-container">
             <h2>Asset Administration Shells</h2>
-            <input type="text" id="searchBar" placeholder="Search by name..." onkeyup="searchAAS()">
+            <div class="search-bar-group">
+                <input type="text" id="searchBar" placeholder="Search by name..." onkeyup="searchAAS()">
+                <button id="showMoreBtn" onclick="window.location.href='all-assets.html'">See all</button>
+            </div>
             <div id="aas-container"></div>
         </div>
     </div>
+
+    <!-- Report Modal -->
+<div id="reportModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); align-items:center; justify-content:center; z-index:1000;">
+    <div style="background:#fff; padding:30px; border-radius:10px; min-width:300px;">
+        <h3>Report AAS</h3>
+        <form id="reportForm">
+            <input type="hidden" id="reportAasId" name="reportAasId">
+            <label for="reportMessage">Message:</label><br>
+            <textarea id="reportMessage" name="reportMessage" rows="4" style="width:100%;" required></textarea><br><br>
+            <button type="submit">Send Report</button>
+            <button type="button" onclick="closeReportModal()">Cancel</button>
+        </form>
+    </div>
+</div>
 
     <script src="scripts.js"></script>
 </body>

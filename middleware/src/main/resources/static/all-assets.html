@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Asset Administration Shells</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Estilo específico para la lista vertical */
+        #all-aas-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .aas-item {
+            min-width: unset;
+            max-width: unset;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="Logo_Mondragon_Unibertsitatea.png" alt="Mondragon Unibertsitatea Logo" class="logo">
+        <h1>All Asset Administration Shells</h1>
+    </header>
+    <div class="container" style="flex-direction: column;">
+        <div class="aas-container" style="width:100%;">
+            <input type="text" id="searchBar" placeholder="Search by name..." onkeyup="searchAAS()">
+            <div id="all-aas-container"></div>
+        </div>
+        <button onclick="window.location.href='index.html'" style="margin: 30px auto 0 auto; display: block;">Back</button>
+    </div>
+    <script>
+        let allAAS = [];
+
+        function displayAllAAS(aasList) {
+            const container = document.getElementById('all-aas-container');
+            container.innerHTML = '';
+            aasList.forEach(aas => {
+                const aasElement = document.createElement('div');
+                aasElement.className = 'aas-item';
+                aasElement.innerHTML = `
+                    <h3>${aas.idShort}</h3>
+                    <p>ID: ${aas.identification.id}</p>
+                    <p>Endpoint: ${aas.endpoints[0].address}</p>
+                    <button class="edit" onclick="editAAS('${aas.identification.id}', '${aas.idShort}', '${aas.endpoints[0].address}')">Edit</button>
+                    <button onclick="deleteAAS('${aas.identification.id}')">Delete</button>
+                    <button onclick="toggleSubmodels('${aas.identification.id}')">Toggle Submodels</button>
+                    <button class="report" onclick="openReportModal('${aas.identification.id}', '${aas.idShort}')">Report</button>
+                    <div id="submodels-${aas.identification.id}" class="submodel-container" style="display: none;"></div>
+                `;
+                container.appendChild(aasElement);
+            });
+        }
+
+        async function fetchAllAAS() {
+            try {
+                const response = await fetch('http://localhost:8082/registry/api/v1/registry');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                allAAS = data;
+                displayAllAAS(allAAS);
+            } catch (error) {
+                console.error('There has been a problem with your fetch operation:', error);
+            }
+        }
+
+        function searchAAS() {
+            const searchTerm = document.getElementById('searchBar').value.toLowerCase();
+            const aasItems = document.getElementsByClassName('aas-item');
+            Array.from(aasItems).forEach(item => {
+                const idShort = item.getElementsByTagName('h3')[0].innerText.toLowerCase();
+                if (idShort.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // Dummy implementations for edit, delete, toggleSubmodels, openReportModal
+        function editAAS() { alert('Edit not available in this view.'); }
+        function deleteAAS() { alert('Delete not available in this view.'); }
+        function toggleSubmodels() { alert('Toggle Submodels not available in this view.'); }
+        function openReportModal() { alert('Report not available in this view.'); }
+
+        window.onload = fetchAllAAS;
+    </script>
+</body>
+</html>

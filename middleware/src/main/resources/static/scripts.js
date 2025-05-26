@@ -111,24 +111,19 @@ document.getElementById('editAasForm').addEventListener('submit', async function
     }
 });
 
-async function fetchAAS() {
-    try {
-        const response = await fetch('http://localhost:8082/registry/api/v1/registry');
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        displayAAS(data);
-    } catch (error) {
-        console.error('There has been a problem with your fetch operation:', error);
-    }
-}
+let allAAS = [];
+let currentPage = 1;
+const pageSize = 10;
 
-function displayAAS(aasList) {
+function displayAAS(aasList, page = 1) {
     const container = document.getElementById('aas-container');
-    container.innerHTML = ''; // Clear any existing content
+    container.innerHTML = '';
 
-    aasList.forEach(aas => {
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    const pageAssets = aasList.slice(start, end);
+
+    pageAssets.forEach(aas => {
         const aasElement = document.createElement('div');
         aasElement.className = 'aas-item';
         aasElement.innerHTML = `
@@ -138,10 +133,31 @@ function displayAAS(aasList) {
             <button class="edit" onclick="editAAS('${aas.identification.id}', '${aas.idShort}', '${aas.endpoints[0].address}')">Edit</button>
             <button onclick="deleteAAS('${aas.identification.id}')">Delete</button>
             <button onclick="toggleSubmodels('${aas.identification.id}')">Toggle Submodels</button>
+            <button class="report" onclick="openReportModal('${aas.identification.id}', '${aas.idShort}')">Report</button>
             <div id="submodels-${aas.identification.id}" class="submodel-container" style="display: none;"></div>
         `;
         container.appendChild(aasElement);
     });
+
+    // Mostrar u ocultar el botón "Show More" según corresponda
+    const showMoreBtn = document.getElementById('showMoreBtn');
+    showMoreBtn.style.display = '';
+    showMoreBtn.textContent = 'See all';
+    
+}
+
+async function fetchAAS() {
+    try {
+        const response = await fetch('http://localhost:8082/registry/api/v1/registry');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        allAAS = data;
+        displayAAS(allAAS, 1);
+    } catch (error) {
+        console.error('There has been a problem with your fetch operation:', error);
+    }
 }
 
 function editAAS(id, idShort, endpoint) {
@@ -212,5 +228,45 @@ function searchAAS() {
         }
     });
 }
+
+function openReportModal(aasId, aasName) {
+    document.getElementById('reportAasId').value = aasId;
+    document.getElementById('reportMessage').value = '';
+    document.getElementById('reportModal').style.display = 'flex';
+}
+
+function closeReportModal() {
+    document.getElementById('reportModal').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const reportForm = document.getElementById('reportForm');
+    if (reportForm) {
+        reportForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const aasId = document.getElementById('reportAasId').value;
+            const message = document.getElementById('reportMessage').value;
+
+            try {
+                const response = await fetch('http://localhost:9090/api/report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        aasId: aasId,
+                        message: message
+                    })
+                });
+                if (response.ok) {
+                    alert('Report sent successfully.');
+                    closeReportModal();
+                } else {
+                    alert('Failed to send report.');
+                }
+            } catch (error) {
+                alert('Error sending report.');
+            }
+        });
+    }
+});
 
 window.onload = fetchAAS;
