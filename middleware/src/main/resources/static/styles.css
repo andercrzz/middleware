@@ -46,13 +46,20 @@ h1, h2 {
 }
 
 .container {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     gap: 20px;
+    max-width: 100%;      /* Limita el ancho al del body/header */
+    width: 100%;          /* Ocupa exactamente el ancho de la página */
+    box-sizing: border-box;
+    margin: 0 auto;
+    overflow-x: hidden;    /* Evita scroll horizontal */
 }
 
 .form-container, .aas-container {
-    width: 48%;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     background-color: #fff; /* Fondo blanco */
     padding: 20px;
     border-radius: 10px;
@@ -107,9 +114,11 @@ button:hover {
     overflow-x: auto;
     gap: 20px;
     max-width: 100%;
+    width: 100%;
     padding-bottom: 30px;
     scroll-behavior: smooth;
-    min-height: 220px; /* Ajusta según el tamaño de tus .aas-item */
+    min-height: 220px;
+    box-sizing: border-box;
 }
 
 .aas-item {
@@ -259,3 +268,30 @@ button:hover {
     padding: 10px 12px;
     margin: 0;
 }
+
+/* Cuando la pantalla es menor o igual a 900px: apila los contenedores */
+/*
+@media (max-width: 900px) {
+    .container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .form-container, .aas-container {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* Cuando la pantalla es mayor a 900px: uno al lado del otro */
+/*
+@media (min-width: 901px) {
+    .container {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+    .form-container, .aas-container {
+        width: 48%;
+        max-width: 48%;
+    }
+}
+*/
