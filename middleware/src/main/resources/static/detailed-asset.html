@@ -37,6 +37,8 @@
         </div>
     </div>
     <script>
+        let chart;
+
         // Get asset ID from URL
         function getAssetIdFromUrl() {
             const params = new URLSearchParams(window.location.search);
@@ -47,7 +49,6 @@
             const assetId = getAssetIdFromUrl();
             if (!assetId) {
                 document.getElementById('asset-details').innerHTML = '<p>Asset not found.</p>';
-                
                 return;
             }
             // Fetch asset details (ajusta la URL si tu backend es diferente)
@@ -57,28 +58,41 @@
                 return;
             }
             const aas = await response.json();
+
+            // Genera los radio buttons para los submodelos
+            let submodelSelectors = '';
+            (aas.submodels || []).forEach((sub, idx) => {
+                submodelSelectors += `
+                    <div class="submodel-selector${idx === 0 ? ' selected' : ''}" 
+                         data-submodel-id="${sub.identification.id}">
+                        <strong>${sub.idShort}</strong>
+                        <ul style="margin: 5px 0 0 15px; font-size: 0.95em;">
+                            ${(sub.submodelElements || []).map(row =>
+                                `<li>
+                                    ${row.idShort}: 
+                                    Color=${row.value.color}, 
+                                    Humidity=${row.value.humidity}
+                                </li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                `;
+            });
+
             document.getElementById('asset-details').innerHTML = `
                 <h2>${aas.idShort}</h2>
                 <p><strong>ID:</strong> ${aas.identification.id}</p>
                 <p><strong>Endpoint:</strong> ${aas.endpoints[0].address}</p>
                 <div>
                     <strong>Submodels:</strong>
-                    <ul>
-                        ${(aas.submodels || []).map(sub =>
-                            `<li>
-                                ${sub.idShort}
-                                <ul>
-                                    ${(sub.submodelElements || []).map(row =>
-                                        `<li>
-                                            ${row.idShort}: 
-                                            Color=${row.value.color}, 
-                                            Humidity=${row.value.humidity}
-                                        </li>`
-                                    ).join('')}
-                                </ul>
-                            </li>`
-                        ).join('')}
-                    </ul>
+                    <div id="submodelSelectorGroup" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px;">
+                        ${submodelSelectors}
+                    </div>
+                </div>
+                <div style="margin:20px 0;">
+                    <label style="margin-left:0;">Data Field: <input type="text" id="inputDataField" placeholder="Ej: humidity"></label>
+                    <label style="margin-left:10px;">Label Field: <input type="text" id="inputLabelField" placeholder="Ej: idShort"></label>
+                    <button id="updateChartBtn" style="margin-left:10px;">Actualizar gráfico</button>
                 </div>
                 <canvas id="assetChart" width="400" height="200" style="margin-top:20px;"></canvas>
                 <div style="display:flex; gap:10px; margin-top:20px;">
@@ -88,30 +102,16 @@
                 </div>
             `;
 
-            // Suponiendo que quieres mostrar los datos del primer submodelo:
-            const submodel = (aas.submodels && aas.submodels[0]) ? aas.submodels[0] : null;
-            let labels = [];
-            let data = [];
-            let backgroundColor = [];
-
-            if (submodel && Array.isArray(submodel.submodelElements)) {
-                submodel.submodelElements.forEach(row => {
-                    labels.push(row.idShort);
-                    data.push(Number(row.value.humidity)); // Asegúrate de convertir a número
-                    backgroundColor.push(row.value.color || '#1e88e5'); // Color por defecto si no hay
-                });
-            }
-
-            // Ahora crea el gráfico con estos datos:
+            // Inicializa el gráfico con el primer submodelo
             const ctx = document.getElementById('assetChart').getContext('2d');
-            const chart = new Chart(ctx, {
+            chart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: [],
                     datasets: [{
-                        label: 'Humidity',
-                        data: data,
-                        backgroundColor: backgroundColor,
+                        label: 'Data',
+                        data: [],
+                        backgroundColor: '#1e88e5',
                     }]
                 },
                 options: {
@@ -124,19 +124,44 @@
                 }
             });
 
-            // Supón que aas.submodels existe y cada sub tiene submodelElements
-            aas.submodels.forEach(sub => {
-                if (sub.submodelElements && Array.isArray(sub.submodelElements)) {
-                    sub.submodelElements.forEach(row => {
-                        // row.idShort es el nombre de la fila
-                        // row.value es un objeto con temperature y humidity
-                        const temp = row.value.temperature;
-                        const hum = row.value.humidity;
-                        // Puedes imprimirlos en consola o construir HTML
-                        console.log(`${row.idShort}: Temp=${temp}, Humidity=${hum}`);
-                    });
-                }
+            updateChartFromInputs(aas);
+
+            // Evento para actualizar el gráfico al pulsar el botón
+            document.getElementById('updateChartBtn').onclick = function() {
+                updateChartFromInputs(aas);
+            };
+
+            // Evento para cambiar de submodelo con los contenedores
+            document.querySelectorAll('.submodel-selector').forEach(div => {
+                div.onclick = function() {
+                    document.querySelectorAll('.submodel-selector').forEach(d => d.classList.remove('selected'));
+                    div.classList.add('selected');
+                    updateChartFromInputs(aas);
+                };
             });
+        }
+
+        function updateChartFromInputs(aas) {
+            const dataField = document.getElementById('inputDataField').value;
+            const labelField = document.getElementById('inputLabelField').value;
+            const selectedDiv = document.querySelector('.submodel-selector.selected');
+            const submodelId = selectedDiv ? selectedDiv.getAttribute('data-submodel-id') : (aas.submodels[0]?.identification.id);
+
+            const submodel = (aas.submodels || []).find(sub => sub.identification.id === submodelId) || aas.submodels[0];
+            let labels = [];
+            let data = [];
+
+            if (submodel && Array.isArray(submodel.submodelElements)) {
+                submodel.submodelElements.forEach(row => {
+                    labels.push(labelField ? row[labelField] || row.idShort : row.idShort);
+                    data.push(dataField ? Number(row.value[dataField]) : Number(row.value.humidity));
+                });
+            }
+
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = data;
+            chart.data.datasets[0].backgroundColor = '#1e88e5';
+            chart.update();
         }
 
         // Puedes reutilizar las funciones openReportModal, closeReportModal, y el submit del reportForm de tu scripts.js
