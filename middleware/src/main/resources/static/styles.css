@@ -10,7 +10,7 @@ header {
     align-items: center;
     justify-content: space-between;
     background-color: #1f1641;
-    padding: 10px 30px;
+    padding: 30px 30px;
     margin-bottom: 5px;
     border-radius: 0; /* Sin bordes redondeados */
     width: 100%;
@@ -54,6 +54,16 @@ h1, h2 {
     box-sizing: border-box;
     margin: 0 auto;
     overflow-x: hidden;    /* Evita scroll horizontal */
+}
+
+.container-all {
+    gap: 20px;
+    max-width: 100%;      /* Limita el ancho al del body/header */
+    width: 100%;          /* Ocupa exactamente el ancho de la página */
+    box-sizing: border-box;
+    margin: 0 auto;
+    overflow-x: hidden;    /* Evita scroll horizontal */
+    padding-left: 32px;    /* Añade padding a la izquierda */
 }
 
 .form-container, .aas-container {
@@ -349,4 +359,13 @@ button:hover {
     background: #ccecf0;
     border-color: #1e88e5;
     box-shadow: 0 2px 8px rgba(30,41,59,0.18);
+}
+
+.aas-container-all {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    padding-bottom: 30px;
 }
