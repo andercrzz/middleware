@@ -9,7 +9,7 @@
 </head>
 <body>
     <header>
-        <img src="mondragon_logo.png" alt="Mondragon Unibertsitatea Logo" class="logo">
+        <img src="mondragon-logo.png" alt="Mondragon Unibertsitatea Logo" class="logo">
         <h1 class="header-title">Asset Details</h1>
         <img src="arrowhead_logo.png" alt="Mondragon Unibertsitatea Logo" class="logo">
     </header>
@@ -65,7 +65,18 @@
                     <strong>Submodels:</strong>
                     <ul>
                         ${(aas.submodels || []).map(sub =>
-                            `<li>${sub.idShort} (${sub.identification.id})</li>`
+                            `<li>
+                                ${sub.idShort}
+                                <ul>
+                                    ${(sub.submodelElements || []).map(row =>
+                                        `<li>
+                                            ${row.idShort}: 
+                                            Color=${row.value.color}, 
+                                            Humidity=${row.value.humidity}
+                                        </li>`
+                                    ).join('')}
+                                </ul>
+                            </li>`
                         ).join('')}
                     </ul>
                 </div>
@@ -77,16 +88,30 @@
                 </div>
             `;
 
-            // Chart.js code
+            // Suponiendo que quieres mostrar los datos del primer submodelo:
+            const submodel = (aas.submodels && aas.submodels[0]) ? aas.submodels[0] : null;
+            let labels = [];
+            let data = [];
+            let backgroundColor = [];
+
+            if (submodel && Array.isArray(submodel.submodelElements)) {
+                submodel.submodelElements.forEach(row => {
+                    labels.push(row.idShort);
+                    data.push(Number(row.value.humidity)); // Asegúrate de convertir a número
+                    backgroundColor.push(row.value.color || '#1e88e5'); // Color por defecto si no hay
+                });
+            }
+
+            // Ahora crea el gráfico con estos datos:
             const ctx = document.getElementById('assetChart').getContext('2d');
             const chart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Metric 1', 'Metric 2', 'Metric 3'],
+                    labels: labels,
                     datasets: [{
-                        label: 'Submodel Data',
-                        data: [12, 19, 3], // puedes cargar datos reales aquí
-                        backgroundColor: ['#1e88e5', '#1565c0', '#90caf9'],
+                        label: 'Humidity',
+                        data: data,
+                        backgroundColor: backgroundColor,
                     }]
                 },
                 options: {
@@ -96,6 +121,20 @@
                             beginAtZero: true
                         }
                     }
+                }
+            });
+
+            // Supón que aas.submodels existe y cada sub tiene submodelElements
+            aas.submodels.forEach(sub => {
+                if (sub.submodelElements && Array.isArray(sub.submodelElements)) {
+                    sub.submodelElements.forEach(row => {
+                        // row.idShort es el nombre de la fila
+                        // row.value es un objeto con temperature y humidity
+                        const temp = row.value.temperature;
+                        const hum = row.value.humidity;
+                        // Puedes imprimirlos en consola o construir HTML
+                        console.log(`${row.idShort}: Temp=${temp}, Humidity=${hum}`);
+                    });
                 }
             });
         }
