@@ -369,3 +369,11 @@ button:hover {
     box-sizing: border-box;
     padding-bottom: 30px;
 }
+
+#submodelSelectorGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex-wrap: nowrap;
+    margin-bottom: 10px;
+}

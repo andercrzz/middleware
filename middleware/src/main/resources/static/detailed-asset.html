@@ -63,18 +63,27 @@
             // Genera los radio buttons para los submodelos
             let submodelSelectors = '';
             (aas.submodels || []).forEach((sub, idx) => {
+                // Solo el primer elemento de submodelElements
+                const firstElement = (sub.submodelElements && sub.submodelElements[0]) ? sub.submodelElements[0] : null;
+                let valueString = '';
+                if (firstElement && firstElement.value && typeof firstElement.value === 'object') {
+                    valueString = Object.entries(firstElement.value)
+                        .map(([key, val]) => `${key}=${val}`)
+                        .join(', ');
+                }
                 submodelSelectors += `
                     <div class="submodel-selector${idx === 0 ? ' selected' : ''}" 
                          data-submodel-id="${sub.identification.id}">
                         <strong>${sub.idShort}</strong>
                         <ul style="margin: 5px 0 0 15px; font-size: 0.95em;">
-                            ${(sub.submodelElements || []).map(row =>
-                                `<li>
-                                    ${row.idShort}: 
-                                    Color=${row.value.color}, 
-                                    Humidity=${row.value.humidity}
-                                </li>`
-                            ).join('')}
+                            <li>
+                                    Current value: ${sub.value}
+                                </li>
+                            ${firstElement ? `
+                                <li>
+                                    ${firstElement.idShort}
+                                </li>
+                            ` : ''}
                         </ul>
                     </div>
                 `;
@@ -86,14 +95,14 @@
                 <p><strong>Endpoint:</strong> ${aas.endpoints[0].address}</p>
                 <div>
                     <strong>Submodels:</strong>
-                    <div id="submodelSelectorGroup" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px;">
+                    <div id="submodelSelectorGroup">
                         ${submodelSelectors}
                     </div>
                 </div>
                 <button id="showChartBtn" style="margin:20px 0;">Crear gráfico</button>
                 <div id="chartSection" style="display:none;">
                     <div style="margin:20px 0;">
-                        <div style="margin-bottom:10px;">
+                        <div style="margin-bottom:10px; display: flex; align-items: center; gap: 16px;">
                             <label style="margin-left:0;">Chart Type:
                                 <select id="chartTypeSelect">
                                     <option value="bar">Bar</option>
@@ -102,6 +111,10 @@
                                     <option value="doughnut">Doughnut</option>
                                     <option value="scatter">Scatter</option>
                                 </select>
+                            </label>
+                            <label style="margin-left:10px; display: flex; align-items: center;">
+                                Color:
+                                <input type="color" id="chartColor" value="#1e88e5" style="margin-left:6px; width:32px; height:32px; border:none; background:none;">
                             </label>
                         </div>
                         <label style="margin-left:0;">Data Field: <input type="text" id="inputDataField" placeholder="Ej: humidity"></label>
@@ -165,6 +178,7 @@
             const selectedDiv = document.querySelector('.submodel-selector.selected');
             const submodelId = selectedDiv ? selectedDiv.getAttribute('data-submodel-id') : (aas.submodels[0]?.identification.id);
             const chartType = document.getElementById('chartTypeSelect').value;
+            const chartColor = document.getElementById('chartColor').value || '#1e88e5';
 
             const submodel = (aas.submodels || []).find(sub => sub.identification.id === submodelId) || aas.submodels[0];
             let labels = [];
@@ -177,7 +191,6 @@
                 });
             }
 
-            // Destruye el gráfico anterior y crea uno nuevo si cambia el tipo
             if (chart.config.type !== chartType) {
                 chart.destroy();
                 const ctx = document.getElementById('assetChart').getContext('2d');
@@ -188,7 +201,9 @@
                         datasets: [{
                             label: 'Data',
                             data: data,
-                            backgroundColor: '#1e88e5',
+                            backgroundColor: chartType === 'pie' || chartType === 'doughnut'
+                                ? Array(labels.length).fill(chartColor)
+                                : chartColor,
                         }]
                     },
                     options: {
@@ -201,7 +216,9 @@
             } else {
                 chart.data.labels = labels;
                 chart.data.datasets[0].data = data;
-                chart.data.datasets[0].backgroundColor = '#1e88e5';
+                chart.data.datasets[0].backgroundColor = chartType === 'pie' || chartType === 'doughnut'
+                    ? Array(labels.length).fill(chartColor)
+                    : chartColor;
                 chart.update();
             }
         }
