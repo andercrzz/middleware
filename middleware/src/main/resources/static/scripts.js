@@ -33,6 +33,38 @@ document.getElementById('aasForm').addEventListener('submit', async function(eve
         ]
     };
 
+    // --- NUEVO: Parsear address y port del endpoint ---
+    let address = "";
+    let port = "";
+    try {
+        // Ejemplo endpoint: http://12.0.0.1:8891
+        const url = new URL(endpoint);
+        address = url.hostname;
+        port = parseInt(url.port, 10);
+    } catch (e) {
+        alert("Endpoint format is invalid. It should be like http://12.0.0.1:8891");
+        return;
+    }
+
+    // --- NUEVO: POST a Service Registry ---
+    try {
+        await fetch('https://localhost:8443/serviceregistry/mgmt/systems', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                address: address,
+                port: port,
+                systemName: idShort
+            })
+        });
+    } catch (e) {
+        alert('Error registering system in Service Registry');
+        // Puedes continuar o hacer return según tu lógica
+    }
+
+    // --- POST/PUT al backend principal ---
     try {
         const response = await fetch(`http://localhost:8082/registry/api/v1/registry/${identificationId}`, {
             method: 'PUT',
@@ -172,23 +204,24 @@ function editAAS(id, idShort, endpoint) {
     document.getElementById('editAasForm').style.display = 'block';
 }
 
-async function deleteAAS(id) {
-    if (confirm('Are you sure you want to delete this AAS?')) {
-        try {
-            const response = await fetch(`http://localhost:8082/registry/api/v1/registry/${id}`, {
-                method: 'DELETE'
-            });
+async function deleteAAS(aasId) {
+    if (!confirm('Are you sure you want to delete this AAS?')) return;
 
-            if (response.ok) {
-                alert('AAS successfully deleted!');
-                fetchAAS(); // Refresh the AAS list
-            } else {
-                alert('Failed to delete AAS');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error deleting AAS');
-        }
+    // Elimina el AAS de tu backend principal
+    const response = await fetch(`http://localhost:8082/registry/api/v1/registry/${encodeURIComponent(aasId)}`, {
+        method: 'DELETE'
+    });
+
+    // También elimina en el Service Registry (ajusta el ID según corresponda)
+    await fetch('https://localhost:8443/serviceregistry/mgmt/systems/169', {
+        method: 'DELETE'
+    });
+
+    if (response.ok) {
+        alert('AAS deleted successfully.');
+        fetchAAS(); // O recarga la lista de assets
+    } else {
+        alert('Failed to delete AAS.');
     }
 }
 
@@ -236,7 +269,6 @@ function searchAAS() {
 
 function openReportModal(aasId, aasName) {
     document.getElementById('reportAasId').value = aasId;
-    document.getElementById('reportMessage').value = '';
     document.getElementById('reportModal').style.display = 'flex';
 }
 

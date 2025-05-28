@@ -30,8 +30,8 @@
             <h3>Report AAS</h3>
             <form id="reportForm">
                 <input type="hidden" id="reportAasId" name="reportAasId">
-                <label for="reportMessage">Message:</label><br>
-                <textarea id="reportMessage" name="reportMessage" rows="4" style="width:100%;" required></textarea><br><br>
+                <label for="reportEmails">Recipient emails (comma separated):</label><br>
+                <input type="text" id="reportEmails" name="reportEmails" style="width:100%;" required placeholder="example@mail.com, another@mail.com"><br><br>
                 <button type="submit">Send Report</button>
                 <button type="button" onclick="closeReportModal()">Cancel</button>
             </form>
@@ -90,12 +90,26 @@
                         ${submodelSelectors}
                     </div>
                 </div>
-                <div style="margin:20px 0;">
-                    <label style="margin-left:0;">Data Field: <input type="text" id="inputDataField" placeholder="Ej: humidity"></label>
-                    <label style="margin-left:10px;">Label Field: <input type="text" id="inputLabelField" placeholder="Ej: idShort"></label>
-                    <button id="updateChartBtn" style="margin-left:10px;">Actualizar gráfico</button>
+                <button id="showChartBtn" style="margin:20px 0;">Crear gráfico</button>
+                <div id="chartSection" style="display:none;">
+                    <div style="margin:20px 0;">
+                        <div style="margin-bottom:10px;">
+                            <label style="margin-left:0;">Chart Type:
+                                <select id="chartTypeSelect">
+                                    <option value="bar">Bar</option>
+                                    <option value="line">Line</option>
+                                    <option value="pie">Pie</option>
+                                    <option value="doughnut">Doughnut</option>
+                                    <option value="scatter">Scatter</option>
+                                </select>
+                            </label>
+                        </div>
+                        <label style="margin-left:0;">Data Field: <input type="text" id="inputDataField" placeholder="Ej: humidity"></label>
+                        <label style="margin-left:10px;">Label Field: <input type="text" id="inputLabelField" placeholder="Ej: idShort"></label>
+                        <button id="updateChartBtn" style="margin-left:10px;">Actualizar gráfico</button>
+                    </div>
+                    <canvas id="assetChart" width="400" height="200" style="margin-top:20px;"></canvas>
                 </div>
-                <canvas id="assetChart" width="400" height="200" style="margin-top:20px;"></canvas>
                 <div style="display:flex; gap:10px; margin-top:20px;">
                     <button onclick="editAAS('${aas.identification.id}', '${aas.idShort}', '${aas.endpoints[0].address}')">Edit</button>
                     <button onclick="deleteAAS('${aas.identification.id}')">Delete</button>
@@ -103,43 +117,46 @@
                 </div>
             `;
 
-            // Inicializa el gráfico con el primer submodelo
-            const ctx = document.getElementById('assetChart').getContext('2d');
-            chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Data',
-                        data: [],
-                        backgroundColor: '#1e88e5',
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
+            // Mostrar el gráfico y los campos solo al pulsar el botón
+            document.getElementById('showChartBtn').onclick = function() {
+                document.getElementById('chartSection').style.display = '';
+                document.getElementById('showChartBtn').style.display = 'none';
+
+                const ctx = document.getElementById('assetChart').getContext('2d');
+                const chartType = document.getElementById('chartTypeSelect').value;
+                chart = new Chart(ctx, {
+                    type: chartType,
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Data',
+                            data: [],
+                            backgroundColor: '#1e88e5',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { beginAtZero: true }
                         }
                     }
-                }
-            });
-
-            updateChartFromInputs(aas);
-
-            // Evento para actualizar el gráfico al pulsar el botón
-            document.getElementById('updateChartBtn').onclick = function() {
+                });
                 updateChartFromInputs(aas);
-            };
 
-            // Evento para cambiar de submodelo con los contenedores
-            document.querySelectorAll('.submodel-selector').forEach(div => {
-                div.onclick = function() {
-                    document.querySelectorAll('.submodel-selector').forEach(d => d.classList.remove('selected'));
-                    div.classList.add('selected');
+                document.getElementById('updateChartBtn').onclick = function() {
                     updateChartFromInputs(aas);
                 };
-            });
+                document.getElementById('chartTypeSelect').onchange = function() {
+                    updateChartFromInputs(aas);
+                };
+                document.querySelectorAll('.submodel-selector').forEach(div => {
+                    div.onclick = function() {
+                        document.querySelectorAll('.submodel-selector').forEach(d => d.classList.remove('selected'));
+                        div.classList.add('selected');
+                        updateChartFromInputs(aas);
+                    };
+                });
+            };
         }
 
         function updateChartFromInputs(aas) {
@@ -147,6 +164,7 @@
             const labelField = document.getElementById('inputLabelField').value;
             const selectedDiv = document.querySelector('.submodel-selector.selected');
             const submodelId = selectedDiv ? selectedDiv.getAttribute('data-submodel-id') : (aas.submodels[0]?.identification.id);
+            const chartType = document.getElementById('chartTypeSelect').value;
 
             const submodel = (aas.submodels || []).find(sub => sub.identification.id === submodelId) || aas.submodels[0];
             let labels = [];
@@ -159,13 +177,60 @@
                 });
             }
 
-            chart.data.labels = labels;
-            chart.data.datasets[0].data = data;
-            chart.data.datasets[0].backgroundColor = '#1e88e5';
-            chart.update();
+            // Destruye el gráfico anterior y crea uno nuevo si cambia el tipo
+            if (chart.config.type !== chartType) {
+                chart.destroy();
+                const ctx = document.getElementById('assetChart').getContext('2d');
+                chart = new Chart(ctx, {
+                    type: chartType,
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Data',
+                            data: data,
+                            backgroundColor: '#1e88e5',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            } else {
+                chart.data.labels = labels;
+                chart.data.datasets[0].data = data;
+                chart.data.datasets[0].backgroundColor = '#1e88e5';
+                chart.update();
+            }
         }
 
         // Puedes reutilizar las funciones openReportModal, closeReportModal, y el submit del reportForm de tu scripts.js
+
+        document.getElementById('reportForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const aasId = document.getElementById('reportAasId').value;
+            const emails = document.getElementById('reportEmails').value;
+            const canvas = document.getElementById('assetChart');
+            const chartImage = canvas.toDataURL('image/png'); // Imagen en base64
+
+            const message = `Hello,\n\nHere is the report you requested from the web. Please feel free to request more reports for further information.`;
+
+            await fetch('http://localhost:9090/api/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    aasId,
+                    emails,
+                    message,
+                    chartImage
+                })
+            });
+
+            alert('Report sent!');
+            closeReportModal();
+        });
 
         window.onload = loadAssetDetails;
     </script>
