@@ -377,3 +377,19 @@ button:hover {
     flex-wrap: nowrap;
     margin-bottom: 10px;
 }
+
+#addSubmodelBtn, #showChartBtn {
+    transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+
+#addSubmodelBtn:hover {
+    background: #222;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    transform: translateY(-2px) scale(1.03);
+}
+
+#showChartBtn:hover {
+    background: #1769aa;
+    box-shadow: 0 4px 16px rgba(33,150,243,0.18);
+    transform: translateY(-2px) scale(1.03);
+}

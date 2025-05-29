@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Asset Details</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <link rel="icon" type="image/png" href="arrowhead_icon.png">
+    <link rel="icon" type="image/png" href="arrowhead_icon.png">
 </head>
+
 <body>
     <header>
         <img src="mondragon-logo.png" alt="Mondragon Unibertsitatea Logo" class="logo">
-        <h1 class="header-title" style="cursor:pointer;" onclick="window.location.href='index.html'">AAS Creation and Viewer</h1>
+        <h1 class="header-title" style="cursor:pointer;" onclick="window.location.href='index.html'">AAS Creation and
+            Viewer</h1>
         <img src="arrowhead_logo.png" alt="Mondragon Unibertsitatea Logo" class="logo">
     </header>
     <div class="container">
@@ -25,13 +28,15 @@
         </div>
     </div>
     <!-- Report Modal (igual que en index.html) -->
-    <div id="reportModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); align-items:center; justify-content:center; z-index:1000;">
+    <div id="reportModal"
+        style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); align-items:center; justify-content:center; z-index:1000;">
         <div style="background:#fff; padding:30px; border-radius:10px; min-width:300px;">
             <h3>Report AAS</h3>
             <form id="reportForm">
                 <input type="hidden" id="reportAasId" name="reportAasId">
                 <label for="reportEmails">Recipient emails (comma separated):</label><br>
-                <input type="text" id="reportEmails" name="reportEmails" style="width:100%;" required placeholder="example@mail.com, another@mail.com"><br><br>
+                <input type="text" id="reportEmails" name="reportEmails" style="width:100%;" required
+                    placeholder="example@mail.com, another@mail.com"><br><br>
                 <button type="submit">Send Report</button>
                 <button type="button" onclick="closeReportModal()">Cancel</button>
             </form>
@@ -39,6 +44,7 @@
     </div>
     <script>
         let chart;
+        let autoRefreshInterval = null;
 
         // Get asset ID from URL
         function getAssetIdFromUrl() {
@@ -60,10 +66,11 @@
             }
             const aas = await response.json();
 
+            window.aas = aas;
+
             // Genera los radio buttons para los submodelos
             let submodelSelectors = '';
             (aas.submodels || []).forEach((sub, idx) => {
-                // Solo el primer elemento de submodelElements
                 const firstElement = (sub.submodelElements && sub.submodelElements[0]) ? sub.submodelElements[0] : null;
                 let valueString = '';
                 if (firstElement && firstElement.value && typeof firstElement.value === 'object') {
@@ -71,20 +78,52 @@
                         .map(([key, val]) => `${key}=${val}`)
                         .join(', ');
                 }
+
+                // Tabla si hay submodelElements
+                let tableSection = '';
+                if (sub.submodelElements && sub.submodelElements.length > 0) {
+                    // Cabeceras de la tabla
+                    const headers = Object.keys(sub.submodelElements[0].value || {});
+                    tableSection = `
+                        <div class="submodel-table-toggle" style="margin-top:8px;">
+                            <span style="cursor:pointer; color:#111; font-weight:500;" onclick="toggleTable('${sub.identification.id}')">
+                                ▶ Table
+                            </span>
+                            <div id="table_${sub.identification.id}" style="display:none; margin-top:8px;">
+                                <table style="border-collapse:collapse; width:100%; font-size:0.95em;">
+                                    <thead>
+                                        <tr>
+                                            <th style="border-bottom:1px solid #bbb; text-align:left; padding:4px;">idShort</th>
+                                            ${headers.map(h => `<th style="border-bottom:1px solid #bbb; text-align:left; padding:4px;">${h}</th>`).join('')}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${sub.submodelElements.map(row => `
+                                            <tr>
+                                                <td style="padding:4px;">${row.idShort}</td>
+                                                ${headers.map(h => `<td style="padding:4px;">${row.value[h] ?? ''}</td>`).join('')}
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 submodelSelectors += `
                     <div class="submodel-selector${idx === 0 ? ' selected' : ''}" 
                          data-submodel-id="${sub.identification.id}">
                         <strong>${sub.idShort}</strong>
-                        <ul style="margin: 5px 0 0 15px; font-size: 0.95em;">
-                            <li>
-                                    Current value: ${sub.value}
-                                </li>
-                            ${firstElement ? `
-                                <li>
-                                    ${firstElement.idShort}
-                                </li>
-                            ` : ''}
-                        </ul>
+                        <div style="margin: 6px 0 0 0;">
+                            Current value: 
+                            <input type="text" id="currentValueInput_${sub.identification.id}" value="${sub.value ?? ''}" style="width:80px;">
+                            <button onclick="saveCurrentValue('${sub.identification.id}', this)" 
+                                style="background: #2196f3; color: #fff; border: none; border-radius: 5px; padding: 4px 8px; margin-left: 6px; cursor: pointer; display: inline-flex; align-items: center;">
+                                <span style="font-size: 1.2em;">&#128190;</span>
+                            </button>
+                        </div>
+                        ${tableSection}
                     </div>
                 `;
             });
@@ -98,8 +137,33 @@
                     <div id="submodelSelectorGroup">
                         ${submodelSelectors}
                     </div>
+                    <button id="addSubmodelBtn" style="
+                        margin:18px 0 0 0;
+                        width:100%;
+                        background:#111;
+                        color:#fff;
+                        border:none;
+                        border-radius:6px;
+                        padding:12px 0;
+                        font-size:1.05em;
+                        font-weight:500;
+                        cursor:pointer;
+                        transition: background 0.2s;
+                    ">Add Submodel</button>
                 </div>
-                <button id="showChartBtn" style="margin:20px 0;">Crear gráfico</button>
+                <button id="showChartBtn" style="
+                    margin:20px 0;
+                    width:100%;
+                    background:#2196f3;
+                    color:#fff;
+                    border:none;
+                    border-radius:6px;
+                    padding:12px 0;
+                    font-size:1.05em;
+                    font-weight:500;
+                    cursor:pointer;
+                    transition: background 0.2s;
+                ">Create Chart</button>
                 <div id="chartSection" style="display:none;">
                     <div style="margin:20px 0;">
                         <div style="margin-bottom:10px; display: flex; align-items: center; gap: 16px;">
@@ -124,14 +188,41 @@
                     <canvas id="assetChart" width="400" height="200" style="margin-top:20px;"></canvas>
                 </div>
                 <div style="display:flex; gap:10px; margin-top:20px;">
-                    <button onclick="editAAS('${aas.identification.id}', '${aas.idShort}', '${aas.endpoints[0].address}')">Edit</button>
-                    <button onclick="deleteAAS('${aas.identification.id}')">Delete</button>
-                    <button onclick="openReportModal('${aas.identification.id}', '${aas.idShort}')">Report</button>
+                    <button onclick="deleteAAS('${aas.identification.id}')" style="
+                        background:#e53935;
+                        color:#fff;
+                        border:none;
+                        border-radius:6px;
+                        padding:12px 0;
+                        font-size:1.05em;
+                        font-weight:500;
+                        cursor:pointer;
+                        width:100%;
+                        transition: background 0.2s;
+                    ">Delete</button>
+                    <button onclick="openReportModal('${aas.identification.id}', '${aas.idShort}')" style="
+                        background:#111;
+                        color:#fff;
+                        border:none;
+                        border-radius:6px;
+                        padding:12px 0;
+                        font-size:1.05em;
+                        font-weight:500;
+                        cursor:pointer;
+                        width:100%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        transition: background 0.2s;
+                    ">
+                        <span style="font-size:1.2em;">&#128231;</span> Report
+                    </button>
                 </div>
             `;
 
             // Mostrar el gráfico y los campos solo al pulsar el botón
-            document.getElementById('showChartBtn').onclick = function() {
+            document.getElementById('showChartBtn').onclick = function () {
                 document.getElementById('chartSection').style.display = '';
                 document.getElementById('showChartBtn').style.display = 'none';
 
@@ -156,20 +247,76 @@
                 });
                 updateChartFromInputs(aas);
 
-                document.getElementById('updateChartBtn').onclick = function() {
+                document.getElementById('updateChartBtn').onclick = function () {
                     updateChartFromInputs(aas);
                 };
-                document.getElementById('chartTypeSelect').onchange = function() {
+                document.getElementById('chartTypeSelect').onchange = function () {
                     updateChartFromInputs(aas);
                 };
                 document.querySelectorAll('.submodel-selector').forEach(div => {
-                    div.onclick = function() {
+                    div.onclick = function () {
                         document.querySelectorAll('.submodel-selector').forEach(d => d.classList.remove('selected'));
                         div.classList.add('selected');
                         updateChartFromInputs(aas);
                     };
                 });
             };
+
+            document.getElementById('addSubmodelBtn').onclick = async function () {
+                // Pide datos básicos del submodelo (puedes mejorar esto con un modal si quieres)
+                const idShort = prompt("Submodel idShort:");
+                if (!idShort) return;
+                const identificationId = prompt("Submodel identification id:");
+                if (!identificationId) return;
+
+                // Crea el nuevo submodelo (puedes añadir más campos si lo necesitas)
+                const newSubmodel = {
+                    idShort: idShort,
+                    identification: { id: identificationId },
+                    value: 0
+                };
+
+                // Obtén el asset actual (aas) y añade el submodelo
+                const assetId = aas.identification.id;
+                const updatedAas = JSON.parse(JSON.stringify(aas)); // Copia profunda
+                updatedAas.submodels.push(newSubmodel);
+
+                // Haz el POST/PUT al backend igual que al registrar un asset nuevo
+                const response = await fetch(`http://localhost:8082/registry/api/v1/registry/${encodeURIComponent(assetId)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedAas)
+                });
+
+                if (response.ok) {
+                    alert('Submodel added!');
+                    location.reload(); // Recarga la página para ver el cambio
+                } else {
+                    alert('Error adding submodel');
+                }
+            };
+        }
+
+        async function refreshAssetData() {
+            const assetId = getAssetIdFromUrl();
+            if (!assetId) return;
+            const response = await fetch(`http://localhost:8082/registry/api/v1/registry/${encodeURIComponent(assetId)}`);
+            if (!response.ok) return;
+            const aas = await response.json();
+            window.aas = aas;
+
+            // Actualiza solo los valores de los submodelos (sin rehacer todo el HTML)
+            (aas.submodels || []).forEach(sub => {
+                const input = document.getElementById(`currentValueInput_${sub.identification.id}`);
+                if (input && sub.value !== undefined) {
+                    input.value = sub.value;
+                }
+            });
+
+            // Si el gráfico está visible, actualiza sus datos
+            if (document.getElementById('chartSection').style.display !== 'none' && typeof updateChartFromInputs === 'function') {
+                updateChartFromInputs(aas);
+            }
         }
 
         function updateChartFromInputs(aas) {
@@ -181,15 +328,25 @@
             const chartColor = document.getElementById('chartColor').value || '#1e88e5';
 
             const submodel = (aas.submodels || []).find(sub => sub.identification.id === submodelId) || aas.submodels[0];
-            let labels = [];
-            let data = [];
-
+            // Cambia aquí: usamos dos mapas, uno para suma y otro para contar ocurrencias
+            let labelSumMap = {};
+            let labelCountMap = {};
             if (submodel && Array.isArray(submodel.submodelElements)) {
                 submodel.submodelElements.forEach(row => {
-                    labels.push(labelField ? row[labelField] || row.idShort : row.idShort);
-                    data.push(dataField ? Number(row.value[dataField]) : Number(row.value.humidity));
+                    const label = labelField ? (row.value[labelField] ?? row.idShort) : row.idShort;
+                    const value = dataField ? Number(row.value[dataField]) : Number(row.value.humidity);
+                    if (label in labelSumMap) {
+                        labelSumMap[label] += value;
+                        labelCountMap[label] += 1;
+                    } else {
+                        labelSumMap[label] = value;
+                        labelCountMap[label] = 1;
+                    }
                 });
             }
+            // Calcula la media para cada label
+            const labels = Object.keys(labelSumMap);
+            const data = labels.map(label => labelSumMap[label] / labelCountMap[label]);
 
             if (chart.config.type !== chartType) {
                 chart.destroy();
@@ -225,7 +382,7 @@
 
         // Puedes reutilizar las funciones openReportModal, closeReportModal, y el submit del reportForm de tu scripts.js
 
-        document.getElementById('reportForm').addEventListener('submit', async function(event) {
+        document.getElementById('reportForm').addEventListener('submit', async function (event) {
             event.preventDefault();
             const aasId = document.getElementById('reportAasId').value;
             const emails = document.getElementById('reportEmails').value;
@@ -249,8 +406,60 @@
             closeReportModal();
         });
 
-        window.onload = loadAssetDetails;
+        window.onload = function () {
+            loadAssetDetails();
+            // Refresca solo los datos cada 5 segundos sin recargar la página
+            autoRefreshInterval = setInterval(refreshAssetData, 5000);
+        };
+
+        window.onunload = function () {
+            clearInterval(autoRefreshInterval);
+        };
+
+        window.saveCurrentValue = async function (submodelId, btn) {
+            const updatedAas = JSON.parse(JSON.stringify(window.aas));
+            const submodel = (updatedAas.submodels || []).find(sub => sub.identification.id === submodelId);
+            if (!submodel) {
+                alert('Submodel not found');
+                return;
+            }
+            const newValue = document.getElementById(`currentValueInput_${submodelId}`).value;
+            submodel.value = newValue;
+
+            const response = await fetch(`http://localhost:8082/registry/api/v1/registry/${encodeURIComponent(updatedAas.identification.id)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedAas)
+            });
+
+            if (response.ok) {
+                // Mensaje visual de cambios guardados
+                const msg = document.createElement('span');
+                msg.textContent = '✔ Changes saved';
+                msg.style.color = '#43a047';
+                msg.style.marginLeft = '10px';
+                msg.style.fontWeight = 'bold';
+                btn.parentNode.appendChild(msg);
+                setTimeout(() => msg.remove(), 1800);
+            } else {
+                alert('Error updating value');
+            }
+        };
+
+        // Añade esta función global para el toggle
+        window.toggleTable = function (submodelId) {
+            const tableDiv = document.getElementById('table_' + submodelId);
+            const toggleSpan = tableDiv.parentNode.querySelector('span');
+            if (tableDiv.style.display === 'none') {
+                tableDiv.style.display = '';
+                toggleSpan.textContent = '▼ Table';
+            } else {
+                tableDiv.style.display = 'none';
+                toggleSpan.textContent = '▶ Table';
+            }
+        }
     </script>
     <script src="scripts.js"></script>
 </body>
+
 </html>
