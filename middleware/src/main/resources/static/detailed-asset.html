@@ -82,7 +82,6 @@
                 // Tabla si hay submodelElements
                 let tableSection = '';
                 if (sub.submodelElements && sub.submodelElements.length > 0) {
-                    // Cabeceras de la tabla
                     const headers = Object.keys(sub.submodelElements[0].value || {});
                     tableSection = `
                         <div class="submodel-table-toggle" style="margin-top:8px;">
@@ -111,10 +110,28 @@
                     `;
                 }
 
-                submodelSelectors += `
-                    <div class="submodel-selector${idx === 0 ? ' selected' : ''}" 
-                         data-submodel-id="${sub.identification.id}">
-                        <strong>${sub.idShort}</strong>
+                // Si el submodelo es de tipo archivo (nombre contiene 'file')
+                let currentValueHtml = '';
+                if (sub.idShort.toLowerCase().includes('file')) {
+                    // Muestra el enlace al archivo si existe
+                    const fileUrl = sub.value || '';
+                    if (fileUrl) {
+                        currentValueHtml = `
+                            <div style="margin: 6px 0 0 0;">
+                                File URL: 
+                                <a href="${fileUrl}" target="_blank" style="color:#2196f3; word-break:break-all;">${fileUrl}</a>
+                            </div>
+                        `;
+                    } else {
+                        currentValueHtml = `
+                            <div style="margin: 6px 0 0 0; color:#888;">
+                                No file URL available
+                            </div>
+                        `;
+                    }
+                } else {
+                    // Caso normal: input editable
+                    currentValueHtml = `
                         <div style="margin: 6px 0 0 0;">
                             Current value: 
                             <input type="text" id="currentValueInput_${sub.identification.id}" value="${sub.value ?? ''}" style="width:80px;">
@@ -123,6 +140,14 @@
                                 <span style="font-size: 1.2em;">&#128190;</span>
                             </button>
                         </div>
+                    `;
+                }
+
+                submodelSelectors += `
+                    <div class="submodel-selector${idx === 0 ? ' selected' : ''}" 
+                         data-submodel-id="${sub.identification.id}">
+                        <strong>${sub.idShort}</strong>
+                        ${currentValueHtml}
                         ${tableSection}
                     </div>
                 `;
@@ -154,7 +179,7 @@
                 <button id="showChartBtn" style="
                     margin:20px 0;
                     width:100%;
-                    background:#2196f3;
+                    background:#46ce47;
                     color:#fff;
                     border:none;
                     border-radius:6px;
@@ -163,7 +188,8 @@
                     font-weight:500;
                     cursor:pointer;
                     transition: background 0.2s;
-                ">Create Chart</button>
+                ">Get Analytics</button>
+                <div id="analyticsSection" style="display:none; margin:18px 0 0 0; background:#f5fafd; border-radius:8px; padding:16px;"></div>
                 <div id="chartSection" style="display:none;">
                     <div style="margin:20px 0;">
                         <div style="margin-bottom:10px; display: flex; align-items: center; gap: 16px;">
@@ -247,17 +273,23 @@
                 });
                 updateChartFromInputs(aas);
 
+                // Mostrar también las analíticas al crear el gráfico
+                showAnalyticsSection();
+
                 document.getElementById('updateChartBtn').onclick = function () {
                     updateChartFromInputs(aas);
+                    showAnalyticsSection();
                 };
                 document.getElementById('chartTypeSelect').onchange = function () {
                     updateChartFromInputs(aas);
+                    showAnalyticsSection();
                 };
                 document.querySelectorAll('.submodel-selector').forEach(div => {
                     div.onclick = function () {
                         document.querySelectorAll('.submodel-selector').forEach(d => d.classList.remove('selected'));
                         div.classList.add('selected');
                         updateChartFromInputs(aas);
+                        showAnalyticsSection();
                     };
                 });
             };
@@ -295,6 +327,61 @@
                     alert('Error adding submodel');
                 }
             };
+
+            // Añade esto después de renderizar los botones en loadAssetDetails
+            document.getElementById('getAnalyticsBtn').onclick = function () {
+                const selectedDiv = document.querySelector('.submodel-selector.selected');
+                if (!selectedDiv) {
+                    alert('Select a submodel first.');
+                    return;
+                }
+                const submodelId = selectedDiv.getAttribute('data-submodel-id');
+                const submodel = (window.aas.submodels || []).find(sub => sub.identification.id === submodelId);
+
+                let html = `<h4 style="margin-top:0;">Analytics for <span style="color:#1976d2">${submodel.idShort}</span></h4>`;
+
+                if (submodel && Array.isArray(submodel.submodelElements) && submodel.submodelElements.length > 0) {
+                    const keys = Object.keys(submodel.submodelElements[0].value || {});
+                    keys.forEach(key => {
+                        const values = submodel.submodelElements
+                            .map(row => Number(row.value[key]))
+                            .filter(v => !isNaN(v));
+                        if (values.length > 0) {
+                            const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
+                            const min = Math.min(...values);
+                            const max = Math.max(...values);
+
+                            // Predicción simple: extrapolación lineal usando los dos últimos valores
+                            let prediction = 'N/A';
+                            if (values.length >= 2) {
+                                const last = values[values.length - 1];
+                                const prev = values[values.length - 2];
+                                prediction = (last + (last - prev)).toFixed(2);
+                            } else if (values.length === 1) {
+                                prediction = values[0].toFixed(2);
+                            }
+
+                            html += `
+                                <div style="margin-bottom:10px;">
+                                    <strong>${key}</strong>:<br>
+                                    Avg: <span style="color:#388e3c">${avg}</span> &nbsp; 
+                                    Min: <span style="color:#e53935">${min}</span> &nbsp; 
+                                    Max: <span style="color:#1976d2">${max}</span><br>
+                                    <span style="color:#ff9800;">Next value prediction: <strong>${prediction}</strong></span>
+                                </div>
+                            `;
+                        }
+                    });
+                } else if (submodel && submodel.value !== undefined) {
+                    html += `<div>Current value: <strong>${submodel.value}</strong></div>`;
+                } else {
+                    html += `<div>No data available for analytics.</div>`;
+                }
+
+                const analyticsSection = document.getElementById('analyticsSection');
+                analyticsSection.innerHTML = html;
+                analyticsSection.style.display = '';
+            };
         }
 
         async function refreshAssetData() {
@@ -319,6 +406,12 @@
             }
         }
 
+        function getRandomColor() {
+            // Genera un color pastel aleatorio
+            const hue = Math.floor(Math.random() * 360);
+            return `hsl(${hue}, 70%, 65%)`;
+        }
+
         function updateChartFromInputs(aas) {
             const dataField = document.getElementById('inputDataField').value;
             const labelField = document.getElementById('inputLabelField').value;
@@ -328,7 +421,6 @@
             const chartColor = document.getElementById('chartColor').value || '#1e88e5';
 
             const submodel = (aas.submodels || []).find(sub => sub.identification.id === submodelId) || aas.submodels[0];
-            // Cambia aquí: usamos dos mapas, uno para suma y otro para contar ocurrencias
             let labelSumMap = {};
             let labelCountMap = {};
             if (submodel && Array.isArray(submodel.submodelElements)) {
@@ -344,9 +436,16 @@
                     }
                 });
             }
-            // Calcula la media para cada label
             const labels = Object.keys(labelSumMap);
             const data = labels.map(label => labelSumMap[label] / labelCountMap[label]);
+
+            // Colores aleatorios si hay menos de 10 labels y es pie/doughnut
+            let backgroundColor = chartColor;
+            if ((chartType === 'pie' || chartType === 'doughnut') && labels.length > 0 && labels.length <= 10) {
+                backgroundColor = labels.map(() => getRandomColor());
+            } else if (chartType === 'pie' || chartType === 'doughnut') {
+                backgroundColor = Array(labels.length).fill(chartColor);
+            }
 
             if (chart.config.type !== chartType) {
                 chart.destroy();
@@ -358,9 +457,7 @@
                         datasets: [{
                             label: 'Data',
                             data: data,
-                            backgroundColor: chartType === 'pie' || chartType === 'doughnut'
-                                ? Array(labels.length).fill(chartColor)
-                                : chartColor,
+                            backgroundColor: backgroundColor,
                         }]
                     },
                     options: {
@@ -373,9 +470,7 @@
             } else {
                 chart.data.labels = labels;
                 chart.data.datasets[0].data = data;
-                chart.data.datasets[0].backgroundColor = chartType === 'pie' || chartType === 'doughnut'
-                    ? Array(labels.length).fill(chartColor)
-                    : chartColor;
+                chart.data.datasets[0].backgroundColor = backgroundColor;
                 chart.update();
             }
         }
@@ -457,6 +552,58 @@
                 tableDiv.style.display = 'none';
                 toggleSpan.textContent = '▶ Table';
             }
+        }
+
+        // Nueva función para mostrar las analíticas
+        function showAnalyticsSection() {
+            const selectedDiv = document.querySelector('.submodel-selector.selected');
+            if (!selectedDiv) return;
+            const submodelId = selectedDiv.getAttribute('data-submodel-id');
+            const submodel = (window.aas.submodels || []).find(sub => sub.identification.id === submodelId);
+
+            let html = `<h4 style="margin-top:0;">Analytics for <span style="color:#1976d2">${submodel.idShort}</span></h4>`;
+
+            if (submodel && Array.isArray(submodel.submodelElements) && submodel.submodelElements.length > 0) {
+                const keys = Object.keys(submodel.submodelElements[0].value || {});
+                keys.forEach(key => {
+                    const values = submodel.submodelElements
+                        .map(row => Number(row.value[key]))
+                        .filter(v => !isNaN(v));
+                    if (values.length > 0) {
+                        const avg = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
+                        const min = Math.min(...values);
+                        const max = Math.max(...values);
+
+                        // Predicción simple: extrapolación lineal usando los dos últimos valores
+                        let prediction = 'N/A';
+                        if (values.length >= 2) {
+                            const last = values[values.length - 1];
+                            const prev = values[values.length - 2];
+                            prediction = (last + (last - prev)).toFixed(2);
+                        } else if (values.length === 1) {
+                            prediction = values[0].toFixed(2);
+                        }
+
+                        html += `
+                            <div style="margin-bottom:10px;">
+                                <strong>${key}</strong>:<br>
+                                Avg: <span style="color:#388e3c">${avg}</span> &nbsp; 
+                                Min: <span style="color:#e53935">${min}</span> &nbsp; 
+                                Max: <span style="color:#1976d2">${max}</span><br>
+                                <span style="color:#ff9800;">Next value prediction: <strong>${prediction}</strong></span>
+                            </div>
+                        `;
+                    }
+                });
+            } else if (submodel && submodel.value !== undefined) {
+                html += `<div>Current value: <strong>${submodel.value}</strong></div>`;
+            } else {
+                html += `<div>No data available for analytics.</div>`;
+            }
+
+            const analyticsSection = document.getElementById('analyticsSection');
+            analyticsSection.innerHTML = html;
+            analyticsSection.style.display = '';
         }
     </script>
     <script src="scripts.js"></script>
