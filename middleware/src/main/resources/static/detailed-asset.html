@@ -561,10 +561,29 @@
             const submodelId = selectedDiv.getAttribute('data-submodel-id');
             const submodel = (window.aas.submodels || []).find(sub => sub.identification.id === submodelId);
 
-            let html = `<h4 style="margin-top:0;">Analytics for <span style="color:#1976d2">${submodel.idShort}</span></h4>`;
+            // Mantener el valor seleccionado previamente
+            let lastRange = 1;
+            const prevSelect = document.getElementById('predictionRange');
+            if (prevSelect) {
+                lastRange = parseInt(prevSelect.value);
+            }
+
+            // Selector de rango de predicción con la opción seleccionada
+            let html = `
+        <div style="margin-bottom:12px;">
+            <label for="predictionRange"><strong>Prediction range:</strong></label>
+            <select id="predictionRange" style="margin-left:8px;">
+                <option value="1"${lastRange === 1 ? ' selected' : ''}>Next 24h</option>
+                <option value="3"${lastRange === 3 ? ' selected' : ''}>Next 3 days</option>
+                <option value="10"${lastRange === 10 ? ' selected' : ''}>Next 10 days</option>
+            </select>
+        </div>
+        <h4 style="margin-top:0;">Analytics for <span style="color:#1976d2">${submodel.idShort}</span></h4>
+    `;
 
             if (submodel && Array.isArray(submodel.submodelElements) && submodel.submodelElements.length > 0) {
                 const keys = Object.keys(submodel.submodelElements[0].value || {});
+                let range = lastRange;
                 keys.forEach(key => {
                     const values = submodel.submodelElements
                         .map(row => Number(row.value[key]))
@@ -574,25 +593,33 @@
                         const min = Math.min(...values);
                         const max = Math.max(...values);
 
-                        // Predicción simple: extrapolación lineal usando los dos últimos valores
-                        let prediction = 'N/A';
+                        // Predicciones múltiples según rango seleccionado
+                        let predictionHtml = '';
                         if (values.length >= 2) {
-                            const last = values[values.length - 1];
-                            const prev = values[values.length - 2];
-                            prediction = (last + (last - prev)).toFixed(2);
+                            let last = values[values.length - 1];
+                            let prev = values[values.length - 2];
+                            let diff = last - prev;
+                            predictionHtml = '<span style="color:#ff9800;">Next value prediction: ';
+                            for (let i = 1; i <= range; i++) {
+                                last = last + diff;
+                                predictionHtml += `<strong>${last.toFixed(2)}</strong>${i < range ? ', ' : ''}`;
+                            }
+                            predictionHtml += `</span> (${range === 1 ? '24h' : (range === 3 ? '3 days' : '10 days')})`;
                         } else if (values.length === 1) {
-                            prediction = values[0].toFixed(2);
+                            predictionHtml = `<span style="color:#ff9800;">Next value prediction: <strong>${values[0].toFixed(2)}</strong></span>`;
+                        } else {
+                            predictionHtml = `<span style="color:#ff9800;">No prediction available</span>`;
                         }
 
                         html += `
-                            <div style="margin-bottom:10px;">
-                                <strong>${key}</strong>:<br>
-                                Avg: <span style="color:#388e3c">${avg}</span> &nbsp; 
-                                Min: <span style="color:#e53935">${min}</span> &nbsp; 
-                                Max: <span style="color:#1976d2">${max}</span><br>
-                                <span style="color:#ff9800;">Next value prediction: <strong>${prediction}</strong></span>
-                            </div>
-                        `;
+                    <div style="margin-bottom:10px;">
+                        <strong>${key}</strong>:<br>
+                        Avg: <span style="color:#388e3c">${avg}</span> &nbsp; 
+                        Min: <span style="color:#e53935">${min}</span> &nbsp; 
+                        Max: <span style="color:#1976d2">${max}</span><br>
+                        ${predictionHtml}
+                    </div>
+                `;
                     }
                 });
             } else if (submodel && submodel.value !== undefined) {
@@ -604,6 +631,12 @@
             const analyticsSection = document.getElementById('analyticsSection');
             analyticsSection.innerHTML = html;
             analyticsSection.style.display = '';
+
+            // Vuelve a llamar a showAnalyticsSection al cambiar el rango
+            const rangeSelect = document.getElementById('predictionRange');
+            if (rangeSelect) {
+                rangeSelect.onchange = showAnalyticsSection;
+            }
         }
     </script>
     <script src="scripts.js"></script>
